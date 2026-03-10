@@ -1,0 +1,68 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 32 32"
+  width="32"
+  height="32"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+      <feFlood
+        flood-color="hsl(187, 100%, 42%)"
+        flood-opacity="0.5"
+        result="glowColor"
+      />
+      <feComposite
+        in="glowColor"
+        in2="coloredBlur"
+        operator="in"
+        result="softGlow"
+      />
+      <feMerge>
+        <feMergeNode in="softGlow" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="hsl(187, 100%, 28%)" />
+      <stop offset="100%" stop-color="hsl(187, 100%, 18%)" />
+    </radialGradient>
+    <clipPath id="roundedClip">
+      <rect x="1" y="1" width="30" height="30" rx="6" ry="6" />
+    </clipPath>
+  </defs>
+
+  <!-- Dark base fills the entire canvas including corners — no transparent bleed -->
+  <rect x="0" y="0" width="32" height="32" fill="hsl(215, 28%, 9%)" />
+
+  <!-- Teal rounded square -->
+  <rect
+    x="1"
+    y="1"
+    width="30"
+    height="30"
+    rx="6"
+    ry="6"
+    fill="hsl(187, 100%, 42%)"
+    filter="url(#glow)"
+    clip-path="url(#roundedClip)"
+  />
+
+  <!-- Depth overlay -->
+  <rect
+    x="1"
+    y="1"
+    width="30"
+    height="30"
+    rx="6"
+    ry="6"
+    fill="url(#bgGlow)"
+    opacity="0.45"
+    clip-path="url(#roundedClip)"
+  />
+
+  <!-- Zap lightning bolt -->
+  <g transform="translate(4, 3.5)">
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="hsl(215, 28%, 9%)" />
+  </g>
+</svg>
