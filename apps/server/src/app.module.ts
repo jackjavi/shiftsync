@@ -9,6 +9,7 @@ import { SkillsModule } from './modules/skills/skills.module';
 import { UsersModule } from './modules/users/users.module';
 import { AvailabilityModule } from './modules/availability/availability.module';
 import { ShiftsModule } from './modules/shifts/shifts.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -40,6 +41,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     SkillsModule,
     AvailabilityModule,
     ShiftsModule,
+    SchedulingModule,
   ],
 })
 export class AppModule {}
