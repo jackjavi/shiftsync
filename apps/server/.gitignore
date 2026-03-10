@@ -21,6 +21,9 @@ Thumbs.db
 /build
 /.next
 
+# Prisma generated files
+/src/generated/prisma-client
+
 # All projects
 **/node_modules
 **/dist
