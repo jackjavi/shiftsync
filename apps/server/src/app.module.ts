@@ -3,6 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 
+import { AuthModule } from './modules/auth/auth.module';
+import { LocationsModule } from './modules/locations/locations.module';
+import { SkillsModule } from './modules/skills/skills.module';
+import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -26,6 +30,12 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 
     // Infrastructure
     PrismaModule,
+
+    // Domain modules
+    AuthModule,
+    UsersModule,
+    LocationsModule,
+    SkillsModule,
   ],
 })
 export class AppModule {}
