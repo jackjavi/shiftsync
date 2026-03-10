@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum AvailabilityType {
+  RECURRING
+  ONE_OFF
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  DROPPED
+  SWAPPED
+}
+
+enum SwapType {
+  SWAP
+  DROP
+}
+
+enum SwapStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  EXPIRED
+  APPROVED
+}
+
+enum NotificationType {
+  SHIFT_ASSIGNED
+  SHIFT_CHANGED
+  SHIFT_UNASSIGNED
+  SWAP_REQUESTED
+  SWAP_ACCEPTED
+  SWAP_REJECTED
+  SWAP_CANCELLED
+  SWAP_APPROVED
+  SWAP_EXPIRED
+  DROP_AVAILABLE
+  DROP_EXPIRING
+  SCHEDULE_PUBLISHED
+  SCHEDULE_UNPUBLISHED
+  OVERTIME_WARNING
+  CONSECUTIVE_DAY_WARNING
+  AVAILABILITY_CHANGED
+}
+
+enum OvertimeOverrideReason {
+  EMERGENCY_COVERAGE
+  BUSINESS_NECESSITY
+  STAFF_REQUEST
+  OTHER
+}
+
+// ─── Core User & Auth ─────────────────────────────────────────────────────────
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(STAFF)
+  desiredHoursPerWeek Int? // soft target for scheduling fairness
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  managedLocations   LocationManager[]
+  certifications     StaffCertification[]
+  skills             UserSkill[]
+  availabilityWindows AvailabilityWindow[]
+  assignments        ShiftAssignment[]
+  swapRequestsFrom   SwapRequest[]        @relation("SwapRequester")
+  swapRequestsTo     SwapRequest[]        @relation("SwapTarget")
+  notifications      Notification[]
+  auditLogsAsActor   AuditLog[]           @relation("AuditActor")
+  overtimeOverrides  OvertimeOverride[]
+
+  @@map("users")
+}
+
+// ─── Locations ────────────────────────────────────────────────────────────────
+
+model Location {
+  id       Int    @id @default(autoincrement())
+  name     String
+  address  String
+  timezone String // IANA timezone string e.g. "America/Los_Angeles"
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  managers       LocationManager[]
+  certifications StaffCertification[]
+  shifts         Shift[]
+
+  @@map("locations")
+}
+
+model LocationManager {
+  userId     Int
+  locationId Int
+  assignedAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId])
+  @@map("location_managers")
+}
+
+model StaffCertification {
+  userId     Int
+  locationId Int
+  certifiedAt DateTime  @default(now())
+  revokedAt   DateTime? // null = active, set = revoked (soft delete preserves history)
+  revokedBy   Int?      // actorId who revoked
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId])
+  @@map("staff_certifications")
+}
+
+// ─── Skills ───────────────────────────────────────────────────────────────────
+
+model Skill {
+  id   Int    @id @default(autoincrement())
+  name String @unique // "bartender" | "line_cook" | "server" | "host"
+
+  userSkills UserSkill[]
+  shifts     Shift[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  userId  Int
+  skillId Int
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@map("user_skills")
+}
+
+// ─── Availability ─────────────────────────────────────────────────────────────
+
+model AvailabilityWindow {
+  id          Int              @id @default(autoincrement())
+  userId      Int
+  type        AvailabilityType
+  // For RECURRING: dayOfWeek 0=Sunday … 6=Saturday
+  dayOfWeek   Int?
+  // For ONE_OFF: specific date (stored as UTC midnight)
+  date        DateTime?
+  // "HH:MM" 24h format in the user's own reference — evaluated against location timezone at check time
+  startTime   String
+  endTime     String
+  // false = blocked/unavailable for that window
+  isAvailable Boolean  @default(true)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("availability_windows")
+}
+
+// ─── Shifts ───────────────────────────────────────────────────────────────────
+
+model Shift {
+  id          Int      @id @default(autoincrement())
+  locationId  Int
+  skillId     Int
+  // All datetimes stored as UTC
+  startAt     DateTime
+  endAt       DateTime
+  headcount   Int      @default(1) // number of staff slots needed
+  isPublished Boolean  @default(false)
+  isPremium   Boolean  @default(false) // auto-tagged for Fri/Sat evening shifts
+  publishedAt DateTime?
+  // Cutoff for edits: default 48h before shift start
+  editCutoffHours Int  @default(48)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  location    Location         @relation(fields: [locationId], references: [id])
+  skill       Skill            @relation(fields: [skillId], references: [id])
+  assignments ShiftAssignment[]
+  swapRequests SwapRequest[]
+  auditLogs   AuditLog[]       @relation("ShiftAuditLogs")
+
+  @@index([locationId, startAt])
+  @@index([startAt, endAt])
+  @@map("shifts")
+}
+
+model ShiftAssignment {
+  id        Int              @id @default(autoincrement())
+  shiftId   Int
+  userId    Int
+  status    AssignmentStatus @default(ASSIGNED)
+  assignedBy Int?            // userId of manager/admin who made the assignment
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, userId]) // one assignment per person per shift
+  @@map("shift_assignments")
+}
+
+// ─── Swap & Drop Requests ─────────────────────────────────────────────────────
+
+model SwapRequest {
+  id           Int        @id @default(autoincrement())
+  shiftId      Int
+  requesterId  Int        // Staff A initiating the request
+  targetId     Int?       // Staff B for SWAP; null for DROP (open pickup)
+  type         SwapType
+  status       SwapStatus @default(PENDING)
+  requesterNote String?
+  managerNote  String?
+  // For DROP: expires 24h before shift starts (computed at creation)
+  expiresAt    DateTime?
+  resolvedAt   DateTime?
+  resolvedBy   Int?       // manager userId who approved/rejected
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  shift     Shift  @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  requester User   @relation("SwapRequester", fields: [requesterId], references: [id])
+  target    User?  @relation("SwapTarget", fields: [targetId], references: [id])
+
+  @@map("swap_requests")
+}
+
+// ─── Overtime Overrides ───────────────────────────────────────────────────────
+
+model OvertimeOverride {
+  id           Int                    @id @default(autoincrement())
+  userId       Int                    // staff member
+  weekStart    DateTime               // Monday 00:00 UTC of the affected week
+  authorizedBy Int                    // manager/admin userId
+  reason       OvertimeOverrideReason
+  notes        String?
+  createdAt    DateTime               @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, weekStart])
+  @@map("overtime_overrides")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  // Flexible JSON payload: { shiftId, swapId, locationId, ... }
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    Int
+  entityType String   // "Shift" | "ShiftAssignment" | "SwapRequest" | "User" | "Schedule"
+  entityId   Int
+  action     String   // "CREATED" | "UPDATED" | "DELETED" | "PUBLISHED" | "UNPUBLISHED" | "ASSIGNED" | "UNASSIGNED" | "APPROVED" | "REJECTED"
+  before     Json?    // snapshot of entity state before change
+  after      Json?    // snapshot of entity state after change
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  actor  User   @relation("AuditActor", fields: [actorId], references: [id])
+  // Optional direct relation to shift for convenient shift history queries
+  shift  Shift? @relation("ShiftAuditLogs", fields: [entityId], references: [id], map: "audit_log_shift_fk")
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
