@@ -10,6 +10,9 @@ import { UsersModule } from './modules/users/users.module';
 import { AvailabilityModule } from './modules/availability/availability.module';
 import { ShiftsModule } from './modules/shifts/shifts.module';
 import { SchedulingModule } from './modules/scheduling/scheduling.module';
+import { SwapsModule } from './modules/swaps/swaps.module';
+import { OvertimeModule } from './modules/overtime/overtime.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -42,6 +45,9 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     AvailabilityModule,
     ShiftsModule,
     SchedulingModule,
+    SwapsModule,
+    OvertimeModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}
