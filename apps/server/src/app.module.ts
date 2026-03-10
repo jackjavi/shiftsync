@@ -7,6 +7,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { SkillsModule } from './modules/skills/skills.module';
 import { UsersModule } from './modules/users/users.module';
+import { AvailabilityModule } from './modules/availability/availability.module';
+import { ShiftsModule } from './modules/shifts/shifts.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -36,6 +38,8 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     UsersModule,
     LocationsModule,
     SkillsModule,
+    AvailabilityModule,
+    ShiftsModule,
   ],
 })
 export class AppModule {}
