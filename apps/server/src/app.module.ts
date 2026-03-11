@@ -7,6 +7,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AvailabilityModule } from './modules/availability/availability.module';
+import { EmailModule } from './modules/email/email.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OvertimeModule } from './modules/overtime/overtime.module';
@@ -20,7 +21,7 @@ import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
-    // Config — loads .env
+    // Config — loads .env, global so all modules can use ConfigService
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -34,11 +35,14 @@ import { UsersModule } from './modules/users/users.module';
       verboseMemoryLeak: true,
     }),
 
-    // Cron job support
+    // Cron job support (@Cron decorators)
     ScheduleModule.forRoot(),
 
     // Infrastructure
     PrismaModule,
+
+    // Email — @Global() so EmailService is injectable everywhere without importing EmailModule
+    EmailModule,
 
     // Domain modules
     AuthModule,

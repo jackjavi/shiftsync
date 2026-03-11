@@ -10,11 +10,7 @@ export class AnalyticsService {
    * Hours distribution per staff member over a date range.
    * Shows who is over/under scheduled vs their desired hours.
    */
-  async getHoursDistribution(
-    locationId: number,
-    from: string,
-    to: string,
-  ) {
+  async getHoursDistribution(locationId: number, from: string, to: string) {
     const assignments = await this.prisma.shiftAssignment.findMany({
       where: {
         status: 'ASSIGNED',
@@ -31,7 +27,12 @@ export class AnalyticsService {
 
     const staffMap = new Map<
       number,
-      { name: string; desiredPerWeek: number | null; totalHours: number; shiftCount: number }
+      {
+        name: string;
+        desiredPerWeek: number | null;
+        totalHours: number;
+        shiftCount: number;
+      }
     >();
 
     for (const a of assignments) {
@@ -51,10 +52,13 @@ export class AnalyticsService {
 
     // Calculate weeks in range
     const weeks =
-      (new Date(to).getTime() - new Date(from).getTime()) / (7 * 24 * 60 * 60 * 1000);
+      (new Date(to).getTime() - new Date(from).getTime()) /
+      (7 * 24 * 60 * 60 * 1000);
 
     return Array.from(staffMap.entries()).map(([userId, data]) => {
-      const desiredTotal = data.desiredPerWeek ? data.desiredPerWeek * weeks : null;
+      const desiredTotal = data.desiredPerWeek
+        ? data.desiredPerWeek * weeks
+        : null;
       const variance = desiredTotal ? data.totalHours - desiredTotal : null;
 
       return {
@@ -62,16 +66,18 @@ export class AnalyticsService {
         name: data.name,
         totalHours: Math.round(data.totalHours * 10) / 10,
         shiftCount: data.shiftCount,
-        desiredHoursPerPeriod: desiredTotal ? Math.round(desiredTotal * 10) / 10 : null,
+        desiredHoursPerPeriod: desiredTotal
+          ? Math.round(desiredTotal * 10) / 10
+          : null,
         variance: variance ? Math.round(variance * 10) / 10 : null,
         status:
           variance === null
             ? 'unknown'
             : variance > 5
-            ? 'over_scheduled'
-            : variance < -5
-            ? 'under_scheduled'
-            : 'on_target',
+              ? 'over_scheduled'
+              : variance < -5
+                ? 'under_scheduled'
+                : 'on_target',
       };
     });
   }
@@ -97,23 +103,34 @@ export class AnalyticsService {
       },
     });
 
-    const staffPremiumMap = new Map<number, { name: string; premiumShifts: number; shiftDates: string[] }>();
+    const staffPremiumMap = new Map<
+      number,
+      { name: string; premiumShifts: number; shiftDates: string[] }
+    >();
 
     for (const a of premiumAssignments) {
       if (!staffPremiumMap.has(a.userId)) {
-        staffPremiumMap.set(a.userId, { name: a.user.name, premiumShifts: 0, shiftDates: [] });
+        staffPremiumMap.set(a.userId, {
+          name: a.user.name,
+          premiumShifts: 0,
+          shiftDates: [],
+        });
       }
       const entry = staffPremiumMap.get(a.userId)!;
       entry.premiumShifts += 1;
       entry.shiftDates.push(a.shift.startAt.toISOString().split('T')[0]);
     }
 
-    const counts = Array.from(staffPremiumMap.values()).map((v) => v.premiumShifts);
-    const mean = counts.length ? counts.reduce((a, b) => a + b, 0) / counts.length : 0;
-    const variance =
-      counts.length
-        ? counts.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) / counts.length
-        : 0;
+    const counts = Array.from(staffPremiumMap.values()).map(
+      (v) => v.premiumShifts,
+    );
+    const mean = counts.length
+      ? counts.reduce((a, b) => a + b, 0) / counts.length
+      : 0;
+    const variance = counts.length
+      ? counts.reduce((sum, c) => sum + Math.pow(c - mean, 2), 0) /
+        counts.length
+      : 0;
     const stdDev = Math.sqrt(variance);
 
     // Fairness score: 100 - normalized std deviation
@@ -133,8 +150,8 @@ export class AnalyticsService {
         fairnessScore >= 80
           ? 'Fair distribution'
           : fairnessScore >= 60
-          ? 'Slightly uneven — review recommended'
-          : 'Significant imbalance — redistribution needed',
+            ? 'Slightly uneven — review recommended'
+            : 'Significant imbalance — redistribution needed',
       staff: Array.from(staffPremiumMap.entries())
         .map(([userId, data]) => ({
           userId,
@@ -188,8 +205,10 @@ export class AnalyticsService {
       }
       locationMap.get(locId)!.staff.push({
         userId: a.userId,
-        name: a.user.name,
-        skill: a.shift.skill.name,
+        userName: a.user.name,
+        skillName: a.shift.skill.name,
+        shiftId: a.id,
+        locationName: a.shift.location.name,
         shiftEnd: a.shift.endAt,
       });
     }

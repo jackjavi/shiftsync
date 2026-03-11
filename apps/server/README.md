@@ -75,7 +75,7 @@ cp .env.example .env
 # Edit .env with your values
 
 # 4. Start the database
-docker compose up db -d
+sudo docker compose up db -d
 
 # 5. Run migrations and seed
 npx prisma migrate dev --name init

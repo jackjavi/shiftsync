@@ -10,6 +10,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { RealtimeProvider } from "@/context/RealtimeContext";
 import { ToastContainer } from "@/components/feedback/Toast";
 import { QueryProvider } from "@/components/QueryProvider";
 
@@ -98,8 +99,15 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <ToastProvider>
-                {children}
-                <ToastContainer />
+                {/*
+                  RealtimeProvider must be inside AuthProvider (reads user/token)
+                  and ToastProvider (shows notification toasts), and inside
+                  QueryProvider (invalidates queries on socket events).
+                */}
+                <RealtimeProvider>
+                  {children}
+                  <ToastContainer />
+                </RealtimeProvider>
               </ToastProvider>
             </AuthProvider>
           </QueryProvider>
