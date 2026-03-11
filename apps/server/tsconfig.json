@@ -21,5 +21,6 @@
       "@modules/*": ["src/modules/*"],
       "@shared/*": ["src/modules/shared/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "dist", "prisma", "test", "**/*.spec.ts"]
 }
