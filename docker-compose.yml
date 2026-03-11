@@ -1,3 +1,17 @@
+# ─── PRODUCTION ───────────────────────────────────────────────────────────────
+# Usage:
+#   docker compose up -d --build          # first deploy / full rebuild
+#   docker compose up -d --build server   # rebuild server only
+#   docker compose up -d --build client   # rebuild client only
+#
+# First-time setup:
+#   1. docker network create proxy-network   (once per server)
+#   2. Copy .env.production to apps/server/.env and fill in all secrets
+#   3. docker compose up -d --build
+#   4. docker exec shiftsync-server npx prisma db seed
+#
+# Requires a shared proxy-network managed by ~/infrastructure/docker-compose.yml
+
 version: "3.9"
 
 services:
@@ -8,57 +22,85 @@ services:
     environment:
       POSTGRES_DB: shiftsync
       POSTGRES_USER: shiftsync
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-shiftsync_dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432" # internal only — never published to host
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U shiftsync -d shiftsync"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - shiftsync-internal
 
   server:
     build:
       context: ./apps/server
       dockerfile: Dockerfile
+    image: shiftsync-server:latest
     container_name: shiftsync-server
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://shiftsync:${DB_PASSWORD:-shiftsync_dev}@db:5432/shiftsync
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_prod}
+      DATABASE_URL: postgresql://shiftsync:${DB_PASSWORD}@db:5432/shiftsync
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       PORT: 3001
-      NODE_ENV: ${NODE_ENV:-development}
-      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./apps/server:/app
-      - /app/node_modules
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run start:dev"
+      NODE_ENV: production
+      CLIENT_URL: https://shiftsync.boost-buddies.com
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      REDIRECT_URL: ${REDIRECT_URL:-}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
+      USER_EMAIL: ${USER_EMAIL:-}
+      USER_PASSWORD: ${USER_PASSWORD:-}
+    expose:
+      - "3001" # internal only — nginx proxies via proxy-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - shiftsync-internal # can reach db
+      - proxy-network # reachable by infra-nginx
 
   client:
     build:
       context: ./apps/client
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SERVER_URL: https://shiftsync.boost-buddies.com/api
+    image: shiftsync-client:latest
     container_name: shiftsync-client
     restart: unless-stopped
     depends_on:
       - server
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
-      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:3001}
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./apps/client:/app
-      - /app/node_modules
-      - /app/.next
+      NODE_ENV: production
+      PORT: 3000
+    expose:
+      - "3000" # internal only — nginx proxies via proxy-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - proxy-network # reachable by infra-nginx
 
 volumes:
   postgres_data:
+
+networks:
+  shiftsync-internal:
+    driver: bridge # private: only db ↔ server
+  proxy-network:
+    external: true # shared with ~/infrastructure stack (infra-nginx lives here)

@@ -47,7 +47,7 @@ async function main() {
   const [bartender, lineCook, server, host] = skills;
   console.log('✓ Skills created');
 
-  // ── Locations (2 timezones) ───────────────────────────────────────────────
+  // ── Locations (2 timezones, 4 branches) ──────────────────────────────────
   const loc1 = await prisma.location.upsert({
     where: { id: 1 },
     update: {},
@@ -91,114 +91,127 @@ async function main() {
   console.log('✓ Locations created');
 
   // ── Users ─────────────────────────────────────────────────────────────────
+  //  Email mapping:
+  //    jackjavi254@gmail.com         → Admin
+  //    jackmtembete@gmail.com        → Manager West  (Santa Monica + Venice Beach)
+  //    devjack650@gmail.com          → Manager East  (Miami Beach + Fort Lauderdale)
+  //    jacktonmtembete@gmail.com     → Jackton  – bartender, West Coast  (Sunday Night Chaos)
+  //    elitebrainsconsulting@gmail.com → Elite  – server+host, both coasts (Timezone Tangle)
+  //    javiarts@gmail.com            → Javi    – line cook, West Coast  (Overtime Trap)
+  //    oddtwotips@gmail.com          → Oddie   – bartender, West Coast  (Regret Swap)
+  //    rahabmwaura96@gmail.com       → Rahab   – server, East Coast    (Fairness Complaint)
+  //    muzillyamani@gmail.com        → Muzilly – host+server, East Coast
+  //    alex@coastaleats.com          → Alex Kim – bartender, all locations
+  //    tom@coastaleats.com           → Tom Baker – line cook, West Coast (Consecutive Days)
+
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@coastaleats.com' },
+    where: { email: 'jackjavi254@gmail.com' },
     update: {},
     create: {
-      email: 'admin@coastaleats.com',
+      email: 'jackjavi254@gmail.com',
       passwordHash: await hash('Admin1234!'),
-      name: 'Corporate Admin',
+      name: 'Jack Javi',
       role: UserRole.ADMIN,
     },
   });
 
   const mgr1 = await prisma.user.upsert({
-    where: { email: 'manager.west@coastaleats.com' },
+    where: { email: 'jackmtembete@gmail.com' },
     update: {},
     create: {
-      email: 'manager.west@coastaleats.com',
+      email: 'jackmtembete@gmail.com',
       passwordHash: await hash('Manager123!'),
-      name: 'Maria West',
+      name: 'Jack Mtembete',
       role: UserRole.MANAGER,
     },
   });
 
   const mgr2 = await prisma.user.upsert({
-    where: { email: 'manager.east@coastaleats.com' },
+    where: { email: 'devjack650@gmail.com' },
     update: {},
     create: {
-      email: 'manager.east@coastaleats.com',
+      email: 'devjack650@gmail.com',
       passwordHash: await hash('Manager123!'),
-      name: 'James East',
+      name: 'Dev Jack',
       role: UserRole.MANAGER,
     },
   });
 
-  // Staff members
+  // Staff
   const staff = await Promise.all([
-    // Sarah — bartender, West Coast only, available Mon-Fri
+    // Jackton — bartender, West Coast, available Mon-Fri (Sunday Night Chaos scenario)
     prisma.user.upsert({
-      where: { email: 'sarah@coastaleats.com' },
+      where: { email: 'jacktonmtembete@gmail.com' },
       update: {},
       create: {
-        email: 'sarah@coastaleats.com',
+        email: 'jacktonmtembete@gmail.com',
         passwordHash: await hash('Staff123!'),
-        name: 'Sarah Connor',
+        name: 'Jackton Mtembete',
         role: UserRole.STAFF,
         desiredHoursPerWeek: 30,
       },
     }),
-    // John — server + host, both coasts (Timezone Tangle scenario)
+    // Elite — server + host, both coasts (Timezone Tangle scenario)
     prisma.user.upsert({
-      where: { email: 'john@coastaleats.com' },
+      where: { email: 'elitebrainsconsulting@gmail.com' },
       update: {},
       create: {
-        email: 'john@coastaleats.com',
+        email: 'elitebrainsconsulting@gmail.com',
         passwordHash: await hash('Staff123!'),
-        name: 'John Rivera',
+        name: 'Elite Brain',
         role: UserRole.STAFF,
         desiredHoursPerWeek: 40,
       },
     }),
-    // Emma — line cook, approaches overtime this week
+    // Javi — line cook, West Coast (Overtime Trap scenario)
     prisma.user.upsert({
-      where: { email: 'emma@coastaleats.com' },
+      where: { email: 'javiarts@gmail.com' },
       update: {},
       create: {
-        email: 'emma@coastaleats.com',
+        email: 'javiarts@gmail.com',
         passwordHash: await hash('Staff123!'),
-        name: 'Emma Thompson',
+        name: 'Javi Arts',
         role: UserRole.STAFF,
         desiredHoursPerWeek: 35,
       },
     }),
-    // Carlos — bartender + server, West Coast
+    // Oddie — bartender + server, West Coast (Regret Swap scenario)
     prisma.user.upsert({
-      where: { email: 'carlos@coastaleats.com' },
+      where: { email: 'oddtwotips@gmail.com' },
       update: {},
       create: {
-        email: 'carlos@coastaleats.com',
+        email: 'oddtwotips@gmail.com',
         passwordHash: await hash('Staff123!'),
-        name: 'Carlos Mendez',
+        name: 'Oddie Tips',
         role: UserRole.STAFF,
         desiredHoursPerWeek: 25,
       },
     }),
-    // Lisa — server, East Coast, claims she never gets premium shifts
+    // Rahab — server, East Coast, 0 premium shifts (Fairness Complaint scenario)
     prisma.user.upsert({
-      where: { email: 'lisa@coastaleats.com' },
+      where: { email: 'rahabmwaura96@gmail.com' },
       update: {},
       create: {
-        email: 'lisa@coastaleats.com',
+        email: 'rahabmwaura96@gmail.com',
         passwordHash: await hash('Staff123!'),
-        name: 'Lisa Park',
+        name: 'Rahab Mwaura',
         role: UserRole.STAFF,
         desiredHoursPerWeek: 32,
       },
     }),
-    // Mike — host + server, East Coast
+    // Muzilly — host + server, East Coast (premium shift fairness foil)
     prisma.user.upsert({
-      where: { email: 'mike@coastaleats.com' },
+      where: { email: 'muzillyamani@gmail.com' },
       update: {},
       create: {
-        email: 'mike@coastaleats.com',
+        email: 'muzillyamani@gmail.com',
         passwordHash: await hash('Staff123!'),
-        name: 'Mike Johnson',
+        name: 'Muzilly Amani',
         role: UserRole.STAFF,
         desiredHoursPerWeek: 20,
       },
     }),
-    // Alex — bartender, all locations
+    // Alex — bartender, all locations (Regret Swap target)
     prisma.user.upsert({
       where: { email: 'alex@coastaleats.com' },
       update: {},
@@ -210,7 +223,7 @@ async function main() {
         desiredHoursPerWeek: 40,
       },
     }),
-    // Tom — line cook, West Coast, about to hit 7th consecutive day
+    // Tom — line cook, West Coast (Consecutive Days scenario)
     prisma.user.upsert({
       where: { email: 'tom@coastaleats.com' },
       update: {},
@@ -224,7 +237,7 @@ async function main() {
     }),
   ]);
 
-  const [sarah, john, emma, carlos, lisa, mike, alex, tom] = staff;
+  const [jackton, elite, javi, oddie, rahab, muzilly, alex, tom] = staff;
   console.log('✓ Users created');
 
   // ── Manager Location Assignments ─────────────────────────────────────────
@@ -242,26 +255,26 @@ async function main() {
   // ── Staff Certifications ──────────────────────────────────────────────────
   await prisma.staffCertification.createMany({
     data: [
-      // Sarah: West Coast only
-      { userId: sarah.id, locationId: loc1.id },
-      { userId: sarah.id, locationId: loc2.id },
-      // John: BOTH coasts (Timezone Tangle scenario)
-      { userId: john.id, locationId: loc1.id },
-      { userId: john.id, locationId: loc2.id },
-      { userId: john.id, locationId: loc3.id },
-      { userId: john.id, locationId: loc4.id },
-      // Emma: West Coast
-      { userId: emma.id, locationId: loc1.id },
-      { userId: emma.id, locationId: loc2.id },
-      // Carlos: West Coast
-      { userId: carlos.id, locationId: loc1.id },
-      { userId: carlos.id, locationId: loc2.id },
-      // Lisa: East Coast
-      { userId: lisa.id, locationId: loc3.id },
-      { userId: lisa.id, locationId: loc4.id },
-      // Mike: East Coast
-      { userId: mike.id, locationId: loc3.id },
-      { userId: mike.id, locationId: loc4.id },
+      // Jackton: West Coast only
+      { userId: jackton.id, locationId: loc1.id },
+      { userId: jackton.id, locationId: loc2.id },
+      // Elite: BOTH coasts (Timezone Tangle scenario)
+      { userId: elite.id, locationId: loc1.id },
+      { userId: elite.id, locationId: loc2.id },
+      { userId: elite.id, locationId: loc3.id },
+      { userId: elite.id, locationId: loc4.id },
+      // Javi: West Coast
+      { userId: javi.id, locationId: loc1.id },
+      { userId: javi.id, locationId: loc2.id },
+      // Oddie: West Coast
+      { userId: oddie.id, locationId: loc1.id },
+      { userId: oddie.id, locationId: loc2.id },
+      // Rahab: East Coast
+      { userId: rahab.id, locationId: loc3.id },
+      { userId: rahab.id, locationId: loc4.id },
+      // Muzilly: East Coast
+      { userId: muzilly.id, locationId: loc3.id },
+      { userId: muzilly.id, locationId: loc4.id },
       // Alex: All locations
       { userId: alex.id, locationId: loc1.id },
       { userId: alex.id, locationId: loc2.id },
@@ -278,15 +291,15 @@ async function main() {
   // ── User Skills ───────────────────────────────────────────────────────────
   await prisma.userSkill.createMany({
     data: [
-      { userId: sarah.id, skillId: bartender.id },
-      { userId: john.id, skillId: server.id },
-      { userId: john.id, skillId: host.id },
-      { userId: emma.id, skillId: lineCook.id },
-      { userId: carlos.id, skillId: bartender.id },
-      { userId: carlos.id, skillId: server.id },
-      { userId: lisa.id, skillId: server.id },
-      { userId: mike.id, skillId: host.id },
-      { userId: mike.id, skillId: server.id },
+      { userId: jackton.id, skillId: bartender.id },
+      { userId: elite.id, skillId: server.id },
+      { userId: elite.id, skillId: host.id },
+      { userId: javi.id, skillId: lineCook.id },
+      { userId: oddie.id, skillId: bartender.id },
+      { userId: oddie.id, skillId: server.id },
+      { userId: rahab.id, skillId: server.id },
+      { userId: muzilly.id, skillId: host.id },
+      { userId: muzilly.id, skillId: server.id },
       { userId: alex.id, skillId: bartender.id },
       { userId: tom.id, skillId: lineCook.id },
     ],
@@ -295,10 +308,10 @@ async function main() {
   console.log('✓ Skills assigned');
 
   // ── Availability Windows ──────────────────────────────────────────────────
-  // Sarah: Mon-Fri 10am-9pm PT only
+  // Jackton: Mon-Fri 10am-9pm PT (mirrors Sarah's original availability)
   await prisma.availabilityWindow.createMany({
     data: [1, 2, 3, 4, 5].map((day) => ({
-      userId: sarah.id,
+      userId: jackton.id,
       type: 'RECURRING',
       dayOfWeek: day,
       startTime: '10:00',
@@ -308,10 +321,10 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // John: 7 days, 9am-5pm (Timezone Tangle: evaluated per location TZ)
+  // Elite: 7 days, 9am-5pm (Timezone Tangle: evaluated per location TZ)
   await prisma.availabilityWindow.createMany({
     data: [0, 1, 2, 3, 4, 5, 6].map((day) => ({
-      userId: john.id,
+      userId: elite.id,
       type: 'RECURRING',
       dayOfWeek: day,
       startTime: '09:00',
@@ -321,10 +334,10 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // Emma: 6 days (approaching consecutive day warning)
+  // Javi: 6 days (Tue-Sun, approaching consecutive day warning)
   await prisma.availabilityWindow.createMany({
     data: [1, 2, 3, 4, 5, 6].map((day) => ({
-      userId: emma.id,
+      userId: javi.id,
       type: 'RECURRING',
       dayOfWeek: day,
       startTime: '08:00',
@@ -335,7 +348,7 @@ async function main() {
   });
 
   // All others: open availability (all 7 days)
-  for (const staffMember of [carlos, lisa, mike, alex, tom]) {
+  for (const staffMember of [oddie, rahab, muzilly, alex, tom]) {
     await prisma.availabilityWindow.createMany({
       data: [0, 1, 2, 3, 4, 5, 6].map((day) => ({
         userId: staffMember.id,
@@ -351,7 +364,6 @@ async function main() {
   console.log('✓ Availability windows created');
 
   // ── Shifts — This Week (Published) ───────────────────────────────────────
-  // Use next Monday as base
   const now = new Date();
   const daysToMonday = (8 - now.getUTCDay()) % 7 || 7;
   const monday = new Date(now);
@@ -365,10 +377,9 @@ async function main() {
     return d;
   };
 
-  // Published shifts for the week
-  const publishedShifts = await prisma.shift.createMany({
+  await prisma.shift.createMany({
     data: [
-      // Loc1 Monday lunch
+      // idx 0 — Loc1 Monday evening server shift
       {
         locationId: loc1.id,
         skillId: server.id,
@@ -378,7 +389,7 @@ async function main() {
         isPublished: true,
         publishedAt: new Date(),
       },
-      // Loc1 Tuesday dinner
+      // idx 1 — Loc1 Tuesday bartender (Oddie is assigned; Regret Swap scenario)
       {
         locationId: loc1.id,
         skillId: bartender.id,
@@ -388,7 +399,7 @@ async function main() {
         isPublished: true,
         publishedAt: new Date(),
       },
-      // Loc1 Wednesday cook shift
+      // idx 2 — Loc1 Wednesday cook shift
       {
         locationId: loc1.id,
         skillId: lineCook.id,
@@ -398,7 +409,7 @@ async function main() {
         isPublished: true,
         publishedAt: new Date(),
       },
-      // Emma overtime trap — 5 shifts this week already adding up to ~34h
+      // idx 3-6 — Javi overtime trap (4 × 8h = 32h, adding a 5th would breach 40h)
       {
         locationId: loc1.id,
         skillId: lineCook.id,
@@ -435,7 +446,7 @@ async function main() {
         isPublished: true,
         publishedAt: new Date(),
       },
-      // Friday premium shift (loc3 East coast — Lisa fairness complaint)
+      // idx 7 — Friday premium East Coast (Fairness Complaint — Muzilly has it, Rahab doesn't)
       {
         locationId: loc3.id,
         skillId: server.id,
@@ -446,7 +457,7 @@ async function main() {
         publishedAt: new Date(),
         isPremium: true,
       },
-      // Saturday premium (loc3)
+      // idx 8 — Saturday premium East Coast
       {
         locationId: loc3.id,
         skillId: server.id,
@@ -457,7 +468,7 @@ async function main() {
         publishedAt: new Date(),
         isPremium: true,
       },
-      // Sunday 7pm — the Sunday Night Chaos shift (assigned, no coverage)
+      // idx 9 — Sunday 7pm (Sunday Night Chaos — Jackton drops it)
       {
         locationId: loc1.id,
         skillId: bartender.id,
@@ -467,7 +478,7 @@ async function main() {
         isPublished: true,
         publishedAt: new Date(),
       },
-      // Overnight shift (11pm–3am, overnight) — tests overnight shift handling
+      // idx 10 — Overnight shift (tests overnight handling)
       {
         locationId: loc2.id,
         skillId: bartender.id,
@@ -477,7 +488,7 @@ async function main() {
         isPublished: true,
         publishedAt: new Date(),
       },
-      // Tom consecutive days — 6 shifts across Mon-Sat
+      // idx 11-16 — Tom consecutive days (Mon–Sat, 6 in a row)
       {
         locationId: loc1.id,
         skillId: lineCook.id,
@@ -536,39 +547,38 @@ async function main() {
   });
   console.log('✓ Published shifts created');
 
-  // Get shift IDs for assignments
   const allShifts = await prisma.shift.findMany({
     orderBy: { createdAt: 'asc' },
   });
 
-  // Assign Emma to the overtime-trap shifts (indexes 3-6)
+  // Assign Javi to overtime-trap shifts (idx 3-6)
+  await prisma.shiftAssignment.createMany({
+    data: [3, 4, 5, 6].map((i) => ({
+      shiftId: allShifts[i].id,
+      userId: javi.id,
+      assignedBy: mgr1.id,
+    })),
+    skipDuplicates: true,
+  });
+
+  // Assign Jackton to the Sunday Night Chaos shift (idx 9) — she will DROP it
   await prisma.shiftAssignment.createMany({
     data: [
-      { shiftId: allShifts[3].id, userId: emma.id, assignedBy: mgr1.id },
-      { shiftId: allShifts[4].id, userId: emma.id, assignedBy: mgr1.id },
-      { shiftId: allShifts[5].id, userId: emma.id, assignedBy: mgr1.id },
-      { shiftId: allShifts[6].id, userId: emma.id, assignedBy: mgr1.id },
+      { shiftId: allShifts[9].id, userId: jackton.id, assignedBy: mgr1.id },
     ],
     skipDuplicates: true,
   });
 
-  // Assign Sarah to the Sunday Night Chaos shift (index 9)
-  await prisma.shiftAssignment.createMany({
-    data: [{ shiftId: allShifts[9].id, userId: sarah.id, assignedBy: mgr1.id }],
-    skipDuplicates: true,
-  });
-
-  // Assign Lisa to some premium shifts (not all — to simulate unfairness complaint)
+  // Fairness: Muzilly gets both premium shifts; Rahab gets none
   await prisma.shiftAssignment.createMany({
     data: [
-      { shiftId: allShifts[7].id, userId: mike.id, assignedBy: mgr2.id },
-      { shiftId: allShifts[8].id, userId: mike.id, assignedBy: mgr2.id },
-      // Lisa gets none — she will claim unfairness
+      { shiftId: allShifts[7].id, userId: muzilly.id, assignedBy: mgr2.id },
+      { shiftId: allShifts[8].id, userId: muzilly.id, assignedBy: mgr2.id },
     ],
     skipDuplicates: true,
   });
 
-  // Assign Tom to 6 consecutive days
+  // Tom consecutive 6 days (idx 11-16)
   await prisma.shiftAssignment.createMany({
     data: allShifts
       .slice(11, 17)
@@ -576,32 +586,30 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // Assign Carlos to the regular bar shift + create pending swap (Regret Swap scenario)
+  // Oddie on the Tuesday bartender shift (idx 1)
   await prisma.shiftAssignment.createMany({
-    data: [
-      { shiftId: allShifts[1].id, userId: carlos.id, assignedBy: mgr1.id },
-    ],
+    data: [{ shiftId: allShifts[1].id, userId: oddie.id, assignedBy: mgr1.id }],
     skipDuplicates: true,
   });
 
-  // Carlos requests a swap with Alex (both bartenders)
+  // Regret Swap: Oddie requests swap with Alex
   await prisma.swapRequest.create({
     data: {
       shiftId: allShifts[1].id,
-      requesterId: carlos.id,
+      requesterId: oddie.id,
       targetId: alex.id,
       type: SwapType.SWAP,
       status: SwapStatus.PENDING,
-      requesterNote: 'Family event Tuesday',
+      requesterNote: 'Family event on Tuesday — can Alex cover?',
       expiresAt: new Date(allShifts[1].startAt.getTime() - 24 * 60 * 60 * 1000),
     },
   });
 
-  // Sarah creates a DROP request for her Sunday shift
+  // Sunday Night Chaos: Jackton creates a DROP request
   await prisma.swapRequest.create({
     data: {
       shiftId: allShifts[9].id,
-      requesterId: sarah.id,
+      requesterId: jackton.id,
       targetId: null,
       type: SwapType.DROP,
       status: SwapStatus.PENDING,
@@ -612,21 +620,32 @@ async function main() {
 
   console.log('✓ Assignments and swap requests created');
   console.log('\n🎉 Seed complete! Login credentials:');
-  console.log('  Admin:   admin@coastaleats.com / Admin1234!');
-  console.log('  Manager West: manager.west@coastaleats.com / Manager123!');
-  console.log('  Manager East: manager.east@coastaleats.com / Manager123!');
-  console.log('  Staff:   sarah@coastaleats.com / Staff123!');
+  console.log('  Admin:          jackjavi254@gmail.com          / Admin1234!');
+  console.log('  Manager West:   jackmtembete@gmail.com         / Manager123!');
+  console.log('  Manager East:   devjack650@gmail.com           / Manager123!');
   console.log(
-    '  Staff:   john@coastaleats.com  / Staff123!  (both coasts — Timezone Tangle)',
+    '  Staff:          jacktonmtembete@gmail.com      / Staff123!   (Sunday Night Chaos)',
   );
   console.log(
-    '  Staff:   emma@coastaleats.com  / Staff123!  (approaching overtime)',
+    '  Staff:          elitebrainsconsulting@gmail.com / Staff123!  (Timezone Tangle)',
   );
   console.log(
-    '  Staff:   lisa@coastaleats.com  / Staff123!  (fairness complaint)',
+    '  Staff:          javiarts@gmail.com             / Staff123!   (Overtime Trap)',
   );
   console.log(
-    '  Staff:   tom@coastaleats.com   / Staff123!  (6 consecutive days)',
+    '  Staff:          oddtwotips@gmail.com           / Staff123!   (Regret Swap)',
+  );
+  console.log(
+    '  Staff:          rahabmwaura96@gmail.com        / Staff123!   (Fairness Complaint)',
+  );
+  console.log(
+    '  Staff:          muzillyamani@gmail.com         / Staff123!   (Premium Foil)',
+  );
+  console.log(
+    '  Staff:          alex@coastaleats.com           / Staff123!   (Swap target)',
+  );
+  console.log(
+    '  Staff:          tom@coastaleats.com            / Staff123!   (Consecutive Days)',
   );
 }
 

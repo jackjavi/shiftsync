@@ -30,7 +30,6 @@
 - [Constraint Rules Reference](#constraint-rules-reference)
 - [Evaluation Scenarios](#evaluation-scenarios)
 - [Seed Data & Test Credentials](#seed-data--test-credentials)
-- [Known Limitations](#known-limitations)
 - [Ambiguity Decisions](#ambiguity-decisions)
 
 ---
@@ -75,7 +74,7 @@ cp .env.example .env
 # Edit .env with your values
 
 # 4. Start the database
-sudo docker compose up db -d
+docker compose up db -d
 
 # 5. Run migrations and seed
 npx prisma migrate dev --name init
@@ -852,16 +851,19 @@ Run `npx prisma db seed` to populate the database with realistic test data cover
 
 ### Login Credentials
 
-| Role           | Email                          | Password      | Notes                                                                  |
-| -------------- | ------------------------------ | ------------- | ---------------------------------------------------------------------- |
-| Admin          | `admin@coastaleats.com`        | `Admin1234!`  | Full platform access                                                   |
-| Manager (West) | `manager.west@coastaleats.com` | `Manager123!` | Manages Santa Monica + Venice Beach (PT)                               |
-| Manager (East) | `manager.east@coastaleats.com` | `Manager123!` | Manages Miami Beach + Fort Lauderdale (ET)                             |
-| Staff          | `sarah@coastaleats.com`        | `Staff123!`   | Bartender, West Coast only, has pending DROP request                   |
-| Staff          | `john@coastaleats.com`         | `Staff123!`   | Server + Host, **certified at both coasts** — Timezone Tangle scenario |
-| Staff          | `emma@coastaleats.com`         | `Staff123!`   | Line cook, 4 shifts this week (32h) — Overtime Trap scenario           |
-| Staff          | `lisa@coastaleats.com`         | `Staff123!`   | Server, East Coast, 0 premium shifts — Fairness Complaint scenario     |
-| Staff          | `tom@coastaleats.com`          | `Staff123!`   | Line cook, 6 consecutive days assigned — Consecutive Day scenario      |
+| Role           | Email                             | Password      | Notes                                                     |
+| -------------- | --------------------------------- | ------------- | --------------------------------------------------------- |
+| Admin          | `jackjavi254@gmail.com`           | `Admin1234!`  | Full platform access                                      |
+| Manager (West) | `jackmtembete@gmail.com`          | `Manager123!` | Manages Santa Monica + Venice Beach (PT)                  |
+| Manager (East) | `devjack650@gmail.com`            | `Manager123!` | Manages Miami Beach + Fort Lauderdale (ET)                |
+| Staff          | `jacktonmtembete@gmail.com`       | `Staff123!`   | Bartender, West Coast — Sunday Night Chaos                |
+| Staff          | `elitebrainsconsulting@gmail.com` | `Staff123!`   | Server + Host, both coasts — Timezone Tangle              |
+| Staff          | `javiarts@gmail.com`              | `Staff123!`   | Line cook, 4 shifts (32h) — Overtime Trap                 |
+| Staff          | `oddtwotips@gmail.com`            | `Staff123!`   | Bartender, West Coast — Regret Swap requester             |
+| Staff          | `rahabmwaura96@gmail.com`         | `Staff123!`   | Server, East Coast, 0 premium shifts — Fairness Complaint |
+| Staff          | `muzillyamani@gmail.com`          | `Staff123!`   | Host + Server, East Coast — Premium Shift Foil            |
+| Staff          | `alex@coastaleats.com`            | `Staff123!`   | Bartender, all locations — Swap Target                    |
+| Staff          | `tom@coastaleats.com`             | `Staff123!`   | Line cook, 6 consecutive days — Consecutive Days          |
 
 ### Locations
 
@@ -874,21 +876,14 @@ Run `npx prisma db seed` to populate the database with realistic test data cover
 
 ### Pre-seeded Scenarios
 
-- **Sunday Night Chaos** — Sarah is assigned to a Sunday 7pm bartender shift with an open DROP request. `GET /api/scheduling/suggestions/:shiftId` will return Alex Kim as an available replacement.
-- **Overtime Trap** — Emma has 4×8h shifts (32h). Attempting to assign her a 10h shift will trigger the overtime hard block.
-- **Timezone Tangle** — John is certified at locations in both PT and ET with 9–5 recurring availability.
-- **Fairness Complaint** — Mike has 2 premium shifts; Lisa has 0. The fairness report shows a clear imbalance.
-- **Regret Swap** — Carlos has a pending SWAP request with Alex for a Tuesday bartender shift. Cancel it as Carlos to test the regret flow.
+- **Sunday Night Chaos** — Jackton is assigned to a Sunday 7pm bartender shift with an open DROP request. `GET /api/scheduling/suggestions/:shiftId` returns Alex Kim as an available replacement.
+- **Overtime Trap** — Javi has 4×8h shifts (32h). Attempting to assign a 10h shift triggers the overtime hard block.
+- **Timezone Tangle** — Elite Brain is certified at locations in both PT and ET with 9–5 recurring availability.
+- **Fairness Complaint** — Muzilly has 2 premium shifts; Rahab has 0. The fairness report shows a clear imbalance.
+- **Regret Swap** — Oddie has a pending SWAP request with Alex for a Tuesday bartender shift. Cancel it as Oddie to test the regret flow.
 - **Consecutive Days** — Tom is assigned 6 consecutive days. Adding a 7th will require a manager override.
 
 ---
-
-## Known Limitations
-
-- **Email notifications** are simulated (in-app only). No real email delivery is implemented. The architecture supports adding a mail provider (SendGrid, Resend, etc.) by extending `NotificationsService`.
-- **The `on-duty` dashboard** updates via HTTP polling on the client. The Socket.IO `on-duty.update` event infrastructure is in place but the cron emitter is not yet wired to a scheduler interval.
-- **Export of audit logs** returns JSON. CSV export is not yet implemented.
-- **Prisma `$queryRaw` locking** for the simultaneous assignment scenario uses re-validation inside a transaction rather than a `SELECT FOR UPDATE` lock, which is slightly less strict but avoids driver adapter compatibility issues with Prisma 7.
 
 ---
 

@@ -18,13 +18,72 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const TEST_CREDS = [
-  { role: "Admin", email: "admin@coastaleats.com", pw: "Admin1234!" },
+  {
+    role: "Admin",
+    email: "jackjavi254@gmail.com",
+    pw: "Admin1234!",
+    note: "Full platform access",
+  },
   {
     role: "Manager (West)",
-    email: "manager.west@coastaleats.com",
+    email: "jackmtembete@gmail.com",
     pw: "Manager123!",
+    note: "Santa Monica + Venice Beach (PT)",
   },
-  { role: "Staff", email: "sarah@coastaleats.com", pw: "Staff123!" },
+  {
+    role: "Manager (East)",
+    email: "devjack650@gmail.com",
+    pw: "Manager123!",
+    note: "Miami Beach + Fort Lauderdale (ET)",
+  },
+  {
+    role: "Staff — Drop",
+    email: "jacktonmtembete@gmail.com",
+    pw: "Staff123!",
+    note: "Sunday Night Chaos",
+  },
+  {
+    role: "Staff — TZ Tangle",
+    email: "elitebrainsconsulting@gmail.com",
+    pw: "Staff123!",
+    note: "Certified both coasts",
+  },
+  {
+    role: "Staff — Overtime",
+    email: "javiarts@gmail.com",
+    pw: "Staff123!",
+    note: "Approaching 40h limit",
+  },
+  {
+    role: "Staff — Swap",
+    email: "oddtwotips@gmail.com",
+    pw: "Staff123!",
+    note: "Pending regret swap",
+  },
+  {
+    role: "Staff — Fairness",
+    email: "rahabmwaura96@gmail.com",
+    pw: "Staff123!",
+    note: "0 premium shifts",
+  },
+  {
+    role: "Staff — Premium",
+    email: "muzillyamani@gmail.com",
+    pw: "Staff123!",
+    note: "2 premium shifts (foil)",
+  },
+  {
+    role: "Staff — Swap Target",
+    email: "alex@coastaleats.com",
+    pw: "Staff123!",
+    note: "All locations",
+  },
+  {
+    role: "Staff — Consec Days",
+    email: "tom@coastaleats.com",
+    pw: "Staff123!",
+    note: "6 consecutive days",
+  },
 ];
 
 export default function LoginPage() {
@@ -185,34 +244,44 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Test credentials — click to fill, then submit */}
-          <div className="mt-8 p-4 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border)]">
-            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide font-nunito mb-3">
-              Quick fill — test credentials
-            </p>
-            <div className="space-y-1.5">
-              {TEST_CREDS.map(({ role, email, pw }) => (
+          {/* Test credentials — scrollable, fixed height so it never pushes layout */}
+          <div className="mt-8 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border)] overflow-hidden">
+            {/* Header — always visible */}
+            <div className="px-4 pt-3 pb-2">
+              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide font-nunito">
+                Quick fill — test credentials
+              </p>
+              <p className="mt-0.5 text-[10px] text-[var(--text-muted)] font-nunito">
+                Click a row to fill the form, then press Sign in.
+              </p>
+            </div>
+
+            {/* Scrollable list — shows ~4 rows, rest scroll */}
+            <div className="overflow-y-auto max-h-[172px] px-2 pb-2 space-y-0.5">
+              {TEST_CREDS.map(({ role, email, pw, note }) => (
                 <button
                   key={email}
                   type="button"
                   onClick={() => fillCreds(email, pw)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs font-nunito transition-colors",
+                    "w-full flex items-start justify-between gap-2 px-3 py-2 rounded-lg text-left text-xs font-nunito transition-colors",
                     "hover:bg-[hsl(187_100%_42%/0.08)] border border-transparent hover:border-[hsl(187_100%_42%/0.15)]",
                   )}
                 >
-                  <span className="font-semibold text-[var(--text-secondary)] shrink-0">
-                    {role}
-                  </span>
-                  <span className="text-[var(--text-muted)] truncate ml-3">
-                    {email}
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-[var(--text-primary)] leading-tight">
+                      {role}
+                    </span>
+                    <span className="text-[var(--text-muted)] truncate text-[10px]">
+                      {email}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-[hsl(187_100%_42%/0.7)] shrink-0 text-right leading-tight pt-0.5 hidden sm:block">
+                    {note}
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[10px] text-[var(--text-muted)] font-nunito">
-              Click a row to fill the form, then press Sign in.
-            </p>
           </div>
         </div>
       </div>

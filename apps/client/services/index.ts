@@ -39,6 +39,7 @@ export const swapsService = {
     type?: "SWAP" | "DROP";
     locationId?: number;
     page?: number;
+    limit?: number;
   }) =>
     api
       .get<PaginatedResponse<SwapRequest>>("/swaps", { params })

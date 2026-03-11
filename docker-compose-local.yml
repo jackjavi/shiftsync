@@ -1,0 +1,69 @@
+# ─── LOCAL DEVELOPMENT ────────────────────────────────────────────────────────
+# Usage:
+#   docker compose -f docker-compose-local.yml up db -d        # DB only
+#   docker compose -f docker-compose-local.yml up -d --build   # full local stack
+#
+# Run server + client natively for hot-reload:
+#   cd apps/server && npm run start:dev
+#   cd apps/client && npm run dev
+
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: shiftsync-db-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shiftsync
+      POSTGRES_USER: shiftsync
+      POSTGRES_PASSWORD: localpassword
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # exposed to host so local NestJS can connect
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiftsync -d shiftsync"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    image: shiftsync-server:local
+    container_name: shiftsync-server-local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./apps/server/.env
+    environment:
+      DATABASE_URL: postgresql://shiftsync:localpassword@db:5432/shiftsync
+      NODE_ENV: development
+      PORT: 3001
+      CLIENT_URL: http://localhost:3000
+    ports:
+      - "3001:3001" # exposed to host
+
+  client:
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SERVER_URL: http://localhost:3001/api
+    image: shiftsync-client:local
+    container_name: shiftsync-client-local
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+    ports:
+      - "3000:3000" # exposed to host
+
+volumes:
+  postgres_data_local:
