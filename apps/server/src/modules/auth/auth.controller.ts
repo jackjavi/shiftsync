@@ -15,6 +15,7 @@ import { Public } from '../shared/decorators/public.decorator';
 import { ZodValidationPipe } from '../shared/pipes/zod-validation.pipe';
 import { AuthenticatedUser } from '../shared/types/shared.types';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -25,7 +26,10 @@ type LoginDto = z.infer<typeof loginSchema>;
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -36,7 +40,10 @@ export class AuthController {
   }
 
   @Get('me')
-  getMe(@CurrentUser() user: AuthenticatedUser) {
-    return { data: user };
+  async getMe(@CurrentUser() user: AuthenticatedUser) {
+    // Return full user from DB so fields like emailNotificationsEnabled are always fresh
+    const fullUser = await this.usersService.findById(user.id);
+    return { data: fullUser };
   }
 }
+

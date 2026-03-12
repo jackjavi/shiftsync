@@ -1,7 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { google } from 'googleapis';
 import type { Transporter } from 'nodemailer';
 
 // ─── Attachment ───────────────────────────────────────────────────────────────
@@ -18,50 +17,39 @@ export interface EmailAttachment {
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
 
-  /** Cached transporter — recreated if the OAuth2 access-token expires */
   private transporter: Transporter | null = null;
-
-  /** Whether email sending is fully configured and enabled */
   private enabled = false;
 
   constructor(private readonly config: ConfigService) {}
-
-  // ── Bootstrap ──────────────────────────────────────────────────────────────
 
   onModuleInit() {
     this.init();
   }
 
   private init() {
-    const clientId     = this.config.get<string>('GOOGLE_CLIENT_ID');
-    const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
-    const redirectUrl  = this.config.get<string>('REDIRECT_URL');
-    const refreshToken = this.config.get<string>('GOOGLE_REFRESH_TOKEN');
-    const userEmail    = this.config.get<string>('USER_EMAIL');
+    const userEmail = this.config.get<string>('USER_EMAIL');
+    const userPassword = this.config.get<string>('USER_PASSWORD');
 
-    if (!clientId || !clientSecret || !redirectUrl || !refreshToken || !userEmail) {
+    if (!userEmail || !userPassword) {
       this.logger.warn(
-        'Email service disabled — one or more OAuth2 env vars missing ' +
-        '(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URL, GOOGLE_REFRESH_TOKEN, USER_EMAIL). ' +
-        'Notifications will be in-app only.',
+        'Email service disabled — USER_EMAIL or USER_PASSWORD missing. ' +
+          'Notifications will be in-app only.',
       );
       this.enabled = false;
       return;
     }
 
-    const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl);
-    oAuth2Client.setCredentials({ refresh_token: refreshToken });
-
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       port: 465,
       secure: true,
+      debug: true,
       auth: {
-        type: 'OAuth2',
         user: userEmail,
-        clientId,
-        clientSecret,
-        refreshToken,
+        pass: userPassword,
+      },
+      tls: {
+        rejectUnauthorized: true,
       },
     } as nodemailer.TransportOptions);
 
@@ -71,10 +59,6 @@ export class EmailService implements OnModuleInit {
 
   // ── Core send ──────────────────────────────────────────────────────────────
 
-  /**
-   * Send a single email.
-   * Resolves silently if email is disabled/misconfigured — never throws to callers.
-   */
   async send(
     to: string,
     subject: string,
@@ -82,51 +66,57 @@ export class EmailService implements OnModuleInit {
     attachments?: EmailAttachment[],
   ): Promise<void> {
     if (!this.enabled || !this.transporter) {
-      this.logger.debug(`[Email disabled] Would have sent "${subject}" to ${to}`);
+      this.logger.debug(
+        `[Email disabled] Would have sent "${subject}" to ${to}`,
+      );
       return;
     }
 
-    const fromAddress = this.config.get<string>('USER_EMAIL')!;
+    const fromEmail = this.config.get<string>('USER_EMAIL')!;
 
     const mailOptions: nodemailer.SendMailOptions = {
-      from: `"ShiftSync" <${fromAddress}>`,
+      from: `"ShiftSync" <${fromEmail}>`,
       to,
       subject,
       text,
     };
 
     if (attachments && attachments.length > 0) {
-      mailOptions.attachments = attachments.map((a) => ({
-        filename:    a.filename,
-        content:     a.content,
-        contentType: a.contentType ?? 'application/octet-stream',
+      mailOptions.attachments = attachments.map((attachment) => ({
+        filename: attachment.filename,
+        content: attachment.content,
+        contentType: attachment.contentType || 'application/octet-stream',
       }));
+      this.logger.debug(
+        `Sending email with ${attachments.length} attachment(s)`,
+      );
     }
 
     try {
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email sent to ${to} — messageId: ${info.messageId}`);
+      this.logger.log(
+        `Email sent successfully to ${to} — Message ID: ${info.messageId}`,
+      );
     } catch (err: unknown) {
-      // Log but don't propagate — in-app notification was already saved
       this.logger.error(
         `Failed to send email to ${to}: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
 
-  /**
-   * Send the same email to multiple recipients in parallel.
-   * Never throws.
-   */
   async sendToMany(
     recipients: string[],
     subject: string,
     text: string,
     attachments?: EmailAttachment[],
   ): Promise<void> {
-    if (!recipients.length) return;
-    await Promise.allSettled(
-      recipients.map((to) => this.send(to, subject, text, attachments)),
+    if (!recipients || recipients.length === 0) return;
+    const emailPromises = recipients.map((email) =>
+      this.send(email, subject, text, attachments),
+    );
+    await Promise.all(emailPromises);
+    this.logger.log(
+      `Emails sent successfully to ${recipients.length} recipients`,
     );
   }
 
@@ -264,3 +254,4 @@ export class EmailService implements OnModuleInit {
     );
   }
 }
+

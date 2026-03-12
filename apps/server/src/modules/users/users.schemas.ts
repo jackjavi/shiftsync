@@ -14,6 +14,7 @@ export const updateUserSchema = z.object({
   email: z.string().email().optional(),
   desiredHoursPerWeek: z.number().int().min(0).max(168).optional(),
   isActive: z.boolean().optional(),
+  emailNotificationsEnabled: z.boolean().optional(),
 });
 
 export const addSkillSchema = z.object({
@@ -33,3 +34,4 @@ export type CreateUserDto = z.infer<typeof createUserSchema>;
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 export type AddSkillDto = z.infer<typeof addSkillSchema>;
 export type AddCertificationDto = z.infer<typeof addCertificationSchema>;
+

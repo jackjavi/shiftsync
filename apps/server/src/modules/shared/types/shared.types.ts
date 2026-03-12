@@ -1,7 +1,7 @@
 import { UserRole } from '@prisma/client';
 
 export interface JwtPayload {
-  sub: number;       // userId
+  sub: number; // userId
   email: string;
   role: UserRole;
   iat?: number;
@@ -12,6 +12,9 @@ export interface AuthenticatedUser {
   id: number;
   email: string;
   role: UserRole;
+  name?: string;
+  emailNotificationsEnabled?: boolean;
+  desiredHoursPerWeek?: number | null;
 }
 
 export interface ApiResponse<T> {
@@ -60,17 +63,17 @@ export interface StaffSuggestion {
 }
 
 export enum ConstraintRule {
-  DOUBLE_BOOKING        = 'DOUBLE_BOOKING',
-  REST_PERIOD           = 'REST_PERIOD',
-  SKILL_MISMATCH        = 'SKILL_MISMATCH',
+  DOUBLE_BOOKING = 'DOUBLE_BOOKING',
+  REST_PERIOD = 'REST_PERIOD',
+  SKILL_MISMATCH = 'SKILL_MISMATCH',
   CERTIFICATION_MISSING = 'CERTIFICATION_MISSING',
-  UNAVAILABLE           = 'UNAVAILABLE',
-  DAILY_HOURS_EXCEEDED  = 'DAILY_HOURS_EXCEEDED',
+  UNAVAILABLE = 'UNAVAILABLE',
+  DAILY_HOURS_EXCEEDED = 'DAILY_HOURS_EXCEEDED',
   WEEKLY_HOURS_EXCEEDED = 'WEEKLY_HOURS_EXCEEDED',
-  CONSECUTIVE_DAYS      = 'CONSECUTIVE_DAYS',
-  SHIFT_NOT_PUBLISHED   = 'SHIFT_NOT_PUBLISHED',
-  EDIT_CUTOFF_PASSED    = 'EDIT_CUTOFF_PASSED',
-  HEADCOUNT_FULL        = 'HEADCOUNT_FULL',
+  CONSECUTIVE_DAYS = 'CONSECUTIVE_DAYS',
+  SHIFT_NOT_PUBLISHED = 'SHIFT_NOT_PUBLISHED',
+  EDIT_CUTOFF_PASSED = 'EDIT_CUTOFF_PASSED',
+  HEADCOUNT_FULL = 'HEADCOUNT_FULL',
 }
 
 export interface DomainEvent {
@@ -79,3 +82,4 @@ export interface DomainEvent {
   actorId: number;
   timestamp: Date;
 }
+
