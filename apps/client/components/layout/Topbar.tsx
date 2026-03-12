@@ -137,7 +137,7 @@ export function Topbar({ title, notificationCount = 0 }: TopbarProps) {
                   </Link>
 
                   <Link
-                    href="/notifications"
+                    href="/settings"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-elevated)] transition-colors font-nunito"
                   >

@@ -19,7 +19,7 @@ import type { Shift } from "@/types";
 
 export function ScheduleCalendar() {
   const calRef = useRef<FullCalendar>(null);
-  const { isManager } = useAuth();
+  const { user, isManager } = useAuth();
 
   const [weekStart, setWeekStart] = useState(() => getWeekStart());
   const [locationId, setLocationId] = useState<number | undefined>();
@@ -43,21 +43,30 @@ export function ScheduleCalendar() {
     return d.toISOString();
   }, [weekStart]);
 
-  // Managers see all shifts; staff only see published (server enforces this too)
+  // Managers see all shifts; staff only see their own assigned shifts
   const isPublishedFilter = isManager()
     ? showUnpublished
       ? undefined
       : true
     : true;
+  const staffIdFilter = isManager() ? undefined : (user?.id ?? undefined);
 
   const { data: shiftsData, isLoading } = useQuery({
-    queryKey: ["schedule", locationId, from, to, isPublishedFilter],
+    queryKey: [
+      "schedule",
+      locationId,
+      from,
+      to,
+      isPublishedFilter,
+      staffIdFilter,
+    ],
     queryFn: () =>
       shiftsService.list({
         locationId,
         from,
         to,
         isPublished: isPublishedFilter,
+        staffId: staffIdFilter,
         limit: 200,
       }),
   });
