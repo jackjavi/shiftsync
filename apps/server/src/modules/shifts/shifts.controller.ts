@@ -48,6 +48,24 @@ export class ShiftsController {
     return this.service.findAll(filters, user);
   }
 
+  @Get('my')
+  async myShifts(
+    @Query()
+    query: { from?: string; to?: string; page?: string; limit?: string },
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // Returns shifts where the logged-in user has an ASSIGNED assignment
+    const filters = {
+      staffId: user.id,
+      isPublished: user.role === 'STAFF' ? true : undefined,
+      from: query.from,
+      to: query.to,
+      page: query.page ? Number(query.page) : undefined,
+      limit: query.limit ? Number(query.limit) : undefined,
+    };
+    return this.service.findAll(filters as any, user);
+  }
+
   @Get(':id')
   async findById(@Param('id', ParseIntPipe) id: number) {
     return { data: await this.service.findById(id) };
@@ -96,6 +114,12 @@ export class ShiftsController {
     @Body(new ZodValidationPipe(publishWeekSchema)) body: any,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return { data: await this.service.publishWeek(body.locationId, body.weekStart, user) };
+    return {
+      data: await this.service.publishWeek(
+        body.locationId,
+        body.weekStart,
+        user,
+      ),
+    };
   }
 }

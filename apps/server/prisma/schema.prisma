@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  // output = "../src/generated/prisma-client"
+  // output   = "../src/generated/prisma-client"
 }
 
 datasource db {
@@ -74,7 +74,8 @@ model User {
   passwordHash String
   name         String
   role         UserRole @default(STAFF)
-  desiredHoursPerWeek Int? // soft target for scheduling fairness
+  desiredHoursPerWeek       Int?     // soft target for scheduling fairness
+  emailNotificationsEnabled Boolean  @default(false) // user preference: in-app only vs in-app + email
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

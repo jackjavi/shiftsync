@@ -4,8 +4,12 @@ export const createShiftSchema = z
   .object({
     locationId: z.number().int().positive(),
     skillId: z.number().int().positive(),
-    startAt: z.string().datetime({ message: 'startAt must be a valid ISO datetime' }),
-    endAt: z.string().datetime({ message: 'endAt must be a valid ISO datetime' }),
+    startAt: z
+      .string()
+      .datetime({ message: 'startAt must be a valid ISO datetime' }),
+    endAt: z
+      .string()
+      .datetime({ message: 'endAt must be a valid ISO datetime' }),
     headcount: z.number().int().positive().default(1),
     notes: z.string().optional(),
     editCutoffHours: z.number().int().min(0).max(168).default(48),
@@ -27,6 +31,7 @@ export const updateShiftSchema = z.object({
 export const shiftFilterSchema = z.object({
   locationId: z.coerce.number().int().positive().optional(),
   skillId: z.coerce.number().int().positive().optional(),
+  staffId: z.coerce.number().int().positive().optional(), // filter by assigned staff member
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
   isPublished: z.coerce.boolean().optional(),

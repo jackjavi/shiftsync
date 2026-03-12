@@ -22,6 +22,7 @@ interface AuthContextValue {
 
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 
   // Role checks
   isAdmin: () => boolean;
@@ -42,6 +43,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const TOKEN_KEY = "shiftsync_token";
 const USER_KEY = "shiftsync_user";
 const LOCS_KEY = "shiftsync_managed_locations";
+
+// ── Cookie helpers (middleware reads these server-side) ──────────────────────
+function setCookie(name: string, value: string, days = 7) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+function deleteCookie(name: string) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+}
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
@@ -71,6 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .get<{ data: User }>("/auth/me")
           .then((res) => {
             setUser(res.data.data);
+            // Re-affirm cookies (they may have expired while localStorage persisted)
+            setCookie("shiftsync_token", storedToken);
+            setCookie("shiftsync_role", res.data.data.role);
           })
           .catch(() => {
             // Token expired — clear everything
@@ -111,6 +125,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(TOKEN_KEY, access_token);
       localStorage.setItem(USER_KEY, JSON.stringify(loggedInUser));
 
+      // Also write cookies so Next.js middleware can read them server-side
+      setCookie("shiftsync_token", access_token);
+      setCookie("shiftsync_role", loggedInUser.role);
+
       setToken(access_token);
       setUser(loggedInUser);
 
@@ -130,10 +148,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }, [router]);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await api.get<{ data: User }>("/auth/me");
+      setUser(res.data.data);
+      localStorage.setItem(USER_KEY, JSON.stringify(res.data.data));
+    } catch {
+      /* silently fail */
+    }
+  }, []);
+
   function clearAuth() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(LOCS_KEY);
+    deleteCookie("shiftsync_token");
+    deleteCookie("shiftsync_role");
     setToken(null);
     setUser(null);
     setManagedLocationIds([]);
@@ -166,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user && !!token,
       login,
       logout,
+      refreshUser,
       isAdmin,
       isManager,
       isStaffOnly,
@@ -178,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       login,
       logout,
+      refreshUser,
       isAdmin,
       isManager,
       isStaffOnly,

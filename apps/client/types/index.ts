@@ -1,32 +1,50 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF';
-export type AvailabilityType = 'RECURRING' | 'ONE_OFF';
-export type AssignmentStatus = 'ASSIGNED' | 'DROPPED' | 'SWAPPED';
-export type SwapType = 'SWAP' | 'DROP';
-export type SwapStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED' | 'EXPIRED' | 'APPROVED';
+export type UserRole = "ADMIN" | "MANAGER" | "STAFF";
+export type AvailabilityType = "RECURRING" | "ONE_OFF";
+export type AssignmentStatus = "ASSIGNED" | "DROPPED" | "SWAPPED";
+export type SwapType = "SWAP" | "DROP";
+export type SwapStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "EXPIRED"
+  | "APPROVED";
 export type NotificationType =
-  | 'SHIFT_ASSIGNED' | 'SHIFT_CHANGED' | 'SHIFT_UNASSIGNED'
-  | 'SWAP_REQUESTED' | 'SWAP_ACCEPTED' | 'SWAP_REJECTED'
-  | 'SWAP_CANCELLED' | 'SWAP_APPROVED' | 'SWAP_EXPIRED'
-  | 'DROP_AVAILABLE' | 'DROP_EXPIRING'
-  | 'SCHEDULE_PUBLISHED' | 'SCHEDULE_UNPUBLISHED'
-  | 'OVERTIME_WARNING' | 'CONSECUTIVE_DAY_WARNING'
-  | 'AVAILABILITY_CHANGED';
+  | "SHIFT_ASSIGNED"
+  | "SHIFT_CHANGED"
+  | "SHIFT_UNASSIGNED"
+  | "SWAP_REQUESTED"
+  | "SWAP_ACCEPTED"
+  | "SWAP_REJECTED"
+  | "SWAP_CANCELLED"
+  | "SWAP_APPROVED"
+  | "SWAP_EXPIRED"
+  | "DROP_AVAILABLE"
+  | "DROP_EXPIRING"
+  | "SCHEDULE_PUBLISHED"
+  | "SCHEDULE_UNPUBLISHED"
+  | "OVERTIME_WARNING"
+  | "CONSECUTIVE_DAY_WARNING"
+  | "AVAILABILITY_CHANGED";
 
 export type OvertimeOverrideReason =
-  | 'EMERGENCY_COVERAGE' | 'BUSINESS_NECESSITY' | 'STAFF_REQUEST' | 'OTHER';
+  | "EMERGENCY_COVERAGE"
+  | "BUSINESS_NECESSITY"
+  | "STAFF_REQUEST"
+  | "OTHER";
 
 export type ConstraintRule =
-  | 'SKILL_MISMATCH'
-  | 'CERTIFICATION_MISSING'
-  | 'DOUBLE_BOOKING'
-  | 'HEADCOUNT_FULL'
-  | 'REST_PERIOD'
-  | 'UNAVAILABLE'
-  | 'DAILY_HOURS_EXCEEDED'
-  | 'WEEKLY_HOURS_EXCEEDED'
-  | 'CONSECUTIVE_DAYS';
+  | "SKILL_MISMATCH"
+  | "CERTIFICATION_MISSING"
+  | "DOUBLE_BOOKING"
+  | "HEADCOUNT_FULL"
+  | "REST_PERIOD"
+  | "UNAVAILABLE"
+  | "DAILY_HOURS_EXCEEDED"
+  | "WEEKLY_HOURS_EXCEEDED"
+  | "CONSECUTIVE_DAYS";
 
 // ─── Core Models ──────────────────────────────────────────────────────────────
 
@@ -65,6 +83,7 @@ export interface User {
   name: string;
   role: UserRole;
   desiredHoursPerWeek: number | null;
+  emailNotificationsEnabled?: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -131,8 +150,8 @@ export interface SwapRequest {
   createdAt: string;
   updatedAt: string;
   shift?: Shift;
-  requester?: Pick<User, 'id' | 'name' | 'email'>;
-  target?: Pick<User, 'id' | 'name' | 'email'> | null;
+  requester?: Pick<User, "id" | "name" | "email">;
+  target?: Pick<User, "id" | "name" | "email"> | null;
 }
 
 export interface Notification {
@@ -157,7 +176,7 @@ export interface AuditLog {
   ipAddress: string | null;
   userAgent: string | null;
   createdAt: string;
-  actor?: Pick<User, 'id' | 'name' | 'email'>;
+  actor?: Pick<User, "id" | "name" | "email">;
 }
 
 export interface OvertimeOverride {

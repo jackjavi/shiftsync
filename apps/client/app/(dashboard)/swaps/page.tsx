@@ -10,9 +10,11 @@ import {
   Clock,
   Star,
   MapPin,
+  Plus,
 } from "lucide-react";
 import { Button, Badge, Avatar, Card, Skeleton, Select } from "@/components/ui";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { RequestSwapModal } from "@/components/swaps/RequestSwapModal";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { swapsService } from "@/services/index";
@@ -42,6 +44,7 @@ export default function SwapsPage() {
   const [status, setStatus] = useState<SwapStatus | "">("PENDING");
   const [type, setType] = useState<"SWAP" | "DROP" | "">("");
   const [managerNote, setManagerNote] = useState<Record<number, string>>({});
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["swaps", status, type],
@@ -105,13 +108,22 @@ export default function SwapsPage() {
   return (
     <div className="p-4 sm:p-6 space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] font-display">
-          Swaps & Drops
-        </h1>
-        <p className="text-sm text-[var(--text-secondary)] font-nunito mt-1">
-          Staff swap requests and open drop listings
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] font-display">
+            Swaps & Drops
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] font-nunito mt-1">
+            Staff swap requests and open drop listings
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={() => setRequestOpen(true)}
+        >
+          Request Swap / Drop
+        </Button>
       </div>
 
       {/* Filter bar */}
@@ -175,6 +187,11 @@ export default function SwapsPage() {
           ))}
         </div>
       )}
+
+      <RequestSwapModal
+        open={requestOpen}
+        onClose={() => setRequestOpen(false)}
+      />
     </div>
   );
 }

@@ -13,6 +13,8 @@ import type {
   OvertimeDashboard,
   OnDutyLocation,
   AuditLog,
+  Location,
+  Skill,
 } from "@/types";
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -91,6 +93,14 @@ export const usersService = {
   get: (id: number) =>
     api.get<ApiResponse<User>>(`/users/${id}`).then((r) => r.data.data),
 
+  create: (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    desiredHoursPerWeek?: number;
+  }) => api.post<ApiResponse<User>>("/users", data).then((r) => r.data.data),
+
   updateMe: (data: Partial<User>) =>
     api.patch<ApiResponse<User>>("/users/me", data).then((r) => r.data.data),
 
@@ -137,23 +147,16 @@ export const availabilityService = {
 
 export const locationsService = {
   list: () =>
-    api
-      .get<ApiResponse<import("@/types").Location[]>>("/locations")
-      .then((r) => r.data.data),
+    api.get<ApiResponse<Location[]>>("/locations").then((r) => r.data.data),
 
   get: (id: number) =>
-    api
-      .get<ApiResponse<import("@/types").Location>>(`/locations/${id}`)
-      .then((r) => r.data.data),
+    api.get<ApiResponse<Location>>(`/locations/${id}`).then((r) => r.data.data),
 };
 
 // ─── Skills ───────────────────────────────────────────────────────────────────
 
 export const skillsService = {
-  list: () =>
-    api
-      .get<ApiResponse<import("@/types").Skill[]>>("/skills")
-      .then((r) => r.data.data),
+  list: () => api.get<ApiResponse<Skill[]>>("/skills").then((r) => r.data.data),
 };
 
 // ─── Analytics & Overtime ─────────────────────────────────────────────────────
@@ -214,4 +217,14 @@ export const auditService = {
     api
       .get<ApiResponse<AuditLog[]>>(`/audit/shift/${shiftId}`)
       .then((r) => r.data.data),
+
+  export: (params?: { entityType?: string; from?: string; to?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.entityType) query.set("entityType", params.entityType);
+    if (params?.from) query.set("from", params.from);
+    if (params?.to) query.set("to", params.to);
+    return api.get(`/audit/export?${query.toString()}`, {
+      responseType: "blob",
+    });
+  },
 };

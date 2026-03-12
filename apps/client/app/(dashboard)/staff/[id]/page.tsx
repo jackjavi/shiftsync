@@ -3,31 +3,19 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Zap,
-  CheckCircle2,
-  Plus,
-  X,
-  Calendar,
-  Clock,
-  BarChart2,
-} from "lucide-react";
+import { ArrowLeft, Zap, CheckCircle2, Plus, X, Clock } from "lucide-react";
 import { Button, Badge, Avatar, Card, Spinner, Select } from "@/components/ui";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { AvailabilityManager } from "@/components/staff/AvailabilityManager";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import {
   usersService,
-  availabilityService,
   locationsService,
   skillsService,
 } from "@/services/index";
 import { parseApiError } from "@/lib/api";
 import { cn, skillDisplayName, roleBadgeColor } from "@/lib/utils";
-import type { AvailabilityWindow } from "@/types";
-
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function StaffProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -42,15 +30,6 @@ export default function StaffProfilePage() {
   const { data: user, isLoading } = useQuery({
     queryKey: ["users", userId],
     queryFn: () => usersService.get(userId),
-  });
-
-  const { data: availability } = useQuery({
-    queryKey: ["availability", userId],
-    queryFn: () =>
-      isOwnProfile
-        ? availabilityService.me()
-        : availabilityService.forUser(userId),
-    enabled: !!user,
   });
 
   const { data: allSkills } = useQuery({
@@ -133,18 +112,6 @@ export default function StaffProfilePage() {
   const availableLocations = (allLocations ?? []).filter(
     (l) => !existingCertLocationIds.has(l.id),
   );
-
-  // Group availability by day of week
-  const recurringByDay = new Map<number, AvailabilityWindow[]>();
-  (availability ?? [])
-    .filter((a) => a.type === "RECURRING")
-    .forEach((a) => {
-      if (a.dayOfWeek !== null) {
-        if (!recurringByDay.has(a.dayOfWeek))
-          recurringByDay.set(a.dayOfWeek, []);
-        recurringByDay.get(a.dayOfWeek)!.push(a);
-      }
-    });
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6 animate-fade-in">
@@ -323,47 +290,12 @@ export default function StaffProfilePage() {
         )}
       </Card>
 
-      {/* Availability grid */}
-      <Card>
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-[var(--text-muted)]" />
-          <h2 className="text-base font-semibold text-[var(--text-primary)] font-nunito">
-            Weekly Availability
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-7 gap-2">
-          {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-            const windows = recurringByDay.get(day) ?? [];
-            const isAvail = windows.some((w) => w.isAvailable);
-            const isUnavail = windows.some((w) => !w.isAvailable);
-            return (
-              <div key={day} className="flex flex-col items-center gap-1.5">
-                <span className="text-[10px] font-bold text-[var(--text-muted)] font-nunito uppercase tracking-wide">
-                  {DAY_LABELS[day]}
-                </span>
-                <div
-                  className={cn(
-                    "w-full aspect-square rounded-lg flex items-center justify-center text-[10px] font-bold font-nunito border",
-                    isAvail
-                      ? "bg-[hsl(155_60%_40%/0.15)] border-[hsl(155_60%_40%/0.3)] text-[hsl(155_60%_40%)]"
-                      : isUnavail
-                        ? "bg-[hsl(0_72%_54%/0.10)] border-[hsl(0_72%_54%/0.2)] text-[hsl(0_72%_54%)]"
-                        : "bg-[var(--surface-elevated)] border-[var(--border)] text-[var(--text-muted)]",
-                  )}
-                >
-                  {isAvail ? "✓" : isUnavail ? "✗" : "—"}
-                </div>
-                {windows.length > 0 && (
-                  <span className="text-[9px] text-[var(--text-muted)] font-nunito text-center leading-tight">
-                    {windows[0].startTime}–{windows[0].endTime}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+      {/* Availability — editable for own profile, read-only for others */}
+      <AvailabilityManager
+        userId={userId}
+        isOwnProfile={isOwnProfile}
+        canEdit={canEdit}
+      />
     </div>
   );
 }

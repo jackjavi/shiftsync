@@ -32,6 +32,7 @@ services:
     build:
       context: ./apps/server
       dockerfile: Dockerfile
+      target: production
     image: shiftsync-server:local
     container_name: shiftsync-server-local
     restart: unless-stopped
