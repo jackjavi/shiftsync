@@ -174,7 +174,8 @@ curl http://shiftsync.boost-buddies.com
 
 # 9. Issue SSL certificate
 cd ~/infrastructure
-docker compose run --rm --entrypoint certbot certonly \
+docker compose run --rm --entrypoint certbot certbot \
+  certonly \
   --webroot -w /var/www/certbot \
   --email jackmtembete@gmail.com \
   --agree-tos \

@@ -6,10 +6,11 @@ import {
   // AssignmentStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-
 import { PrismaPg } from '@prisma/adapter-pg';
+import { env } from 'prisma/config';
+
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: env('DATABASE_URL')!,
 });
 const prisma = new PrismaClient({ adapter });
 const HASH_ROUNDS = 10;
