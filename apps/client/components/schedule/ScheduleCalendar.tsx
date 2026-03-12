@@ -43,13 +43,12 @@ export function ScheduleCalendar() {
     return d.toISOString();
   }, [weekStart]);
 
-  // Managers see all shifts; staff only see their own assigned shifts
+  // Managers see all shifts; staff only see their own assigned shifts via /shifts/my
   const isPublishedFilter = isManager()
     ? showUnpublished
       ? undefined
       : true
-    : true;
-  const staffIdFilter = isManager() ? undefined : (user?.id ?? undefined);
+    : undefined;
 
   const { data: shiftsData, isLoading } = useQuery({
     queryKey: [
@@ -58,17 +57,19 @@ export function ScheduleCalendar() {
       from,
       to,
       isPublishedFilter,
-      staffIdFilter,
+      isManager(),
     ],
     queryFn: () =>
-      shiftsService.list({
-        locationId,
-        from,
-        to,
-        isPublished: isPublishedFilter,
-        staffId: staffIdFilter,
-        limit: 200,
-      }),
+      isManager()
+        ? shiftsService.list({
+            locationId,
+            from,
+            to,
+            isPublished: isPublishedFilter,
+            limit: 200,
+          })
+        : shiftsService.myShifts({ from, to, limit: 200 }),
+    enabled: !!user, // don't fetch until auth is resolved
   });
 
   const events = useMemo(() => {

@@ -93,6 +93,8 @@ export const usersService = {
   get: (id: number) =>
     api.get<ApiResponse<User>>(`/users/${id}`).then((r) => r.data.data),
 
+  getMe: () => api.get<ApiResponse<User>>("/users/me").then((r) => r.data.data),
+
   create: (data: {
     name: string;
     email: string;

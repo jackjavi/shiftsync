@@ -29,7 +29,9 @@ export default function StaffProfilePage() {
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["users", userId],
-    queryFn: () => usersService.get(userId),
+    queryFn: () =>
+      isOwnProfile ? usersService.getMe() : usersService.get(userId),
+    enabled: !!me, // wait for auth to resolve before fetching
   });
 
   const { data: allSkills } = useQuery({

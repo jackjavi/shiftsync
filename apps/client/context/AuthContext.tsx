@@ -72,30 +72,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (storedToken && storedUser) {
         const parsedUser = JSON.parse(storedUser) as User;
+        // Optimistically populate from localStorage so UI isn't blank while we verify
         setToken(storedToken);
         setUser(parsedUser);
         if (storedLocs) {
           setManagedLocationIds(JSON.parse(storedLocs) as number[]);
         }
-        // Verify token is still valid
+        // Verify token + get fresh user (includes any new fields like emailNotificationsEnabled).
+        // Crucially: keep isLoading=true until this resolves so components don't render
+        // with stale role data (e.g. treating a STAFF user as a MANAGER or vice versa).
         api
           .get<{ data: User }>("/auth/me")
           .then((res) => {
             setUser(res.data.data);
-            // Re-affirm cookies (they may have expired while localStorage persisted)
+            localStorage.setItem(USER_KEY, JSON.stringify(res.data.data));
             setCookie("shiftsync_token", storedToken);
             setCookie("shiftsync_role", res.data.data.role);
           })
           .catch(() => {
-            // Token expired — clear everything
             clearAuth();
+          })
+          .finally(() => {
+            setIsLoading(false);
           });
+        return; // isLoading will be set false inside .finally() above
       }
     } catch {
       clearAuth();
-    } finally {
-      setIsLoading(false);
     }
+    // No stored session — immediately done
+    setIsLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
